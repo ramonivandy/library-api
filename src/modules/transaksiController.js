@@ -1,5 +1,12 @@
 const db = require("../helper/database/index");
-const { addDays, differenceInDays, parse, format } = require("date-fns"); // Make sure to install date-fns
+const {
+  addDays,
+  differenceInDays,
+  parse,
+  format,
+  isValid,
+} = require("date-fns"); // Make sure to install date-fns
+const transaksiModel = require("../models/transaksiModel");
 
 const getAll = async (req, res) => {
   const { page = 1, limit = 1000 } = req.query;
@@ -91,27 +98,23 @@ const getSingle = async (req, res) => {
 const post = async (req, res) => {
   const { id_mahasiswa, books, tanggal_peminjaman, tanggal_kembali } = req.body;
 
+  const { error, value } = transaksiModel.transaksiPost.validate(req.body, {
+    abortEarly: false,
+  });
+
+  if (error) {
+    const errorMessages = error.details.map((err) => err.message);
+    return res.status(400).json({
+      status: 102,
+      message: errorMessages,
+    });
+  }
+
   try {
-    // Check if the date is in YYYY-MM-DD format
-    const parsedTanggalPeminjaman =
-      tanggal_peminjaman.includes("-") &&
-      tanggal_peminjaman.split("-").length === 3
-        ? tanggal_peminjaman
-        : parse(tanggal_peminjaman, "dd-MM-yyyy", new Date())
-            .toISOString()
-            .split("T")[0];
-
-    const parsedTanggalKembali =
-      tanggal_kembali.includes("-") && tanggal_kembali.split("-").length === 3
-        ? tanggal_kembali
-        : parse(tanggal_kembali, "dd-MM-yyyy", new Date())
-            .toISOString()
-            .split("T")[0];
-
     // Validate date difference
     const daysDifference = differenceInDays(
-      parsedTanggalKembali,
-      parsedTanggalPeminjaman
+      tanggal_kembali,
+      tanggal_peminjaman
     );
 
     if (daysDifference > 14) {
@@ -185,8 +188,8 @@ const post = async (req, res) => {
 
     const mainTransaction = await db.query(transactionSql, [
       id_mahasiswa,
-      format(parsedTanggalPeminjaman, "yyyy-MM-dd"),
-      format(parsedTanggalKembali, "yyyy-MM-dd"),
+      tanggal_peminjaman,
+      tanggal_kembali,
     ]);
 
     const id_transaksi = mainTransaction.rows[0].id_transaksi;
@@ -228,12 +231,7 @@ const post = async (req, res) => {
     });
   } catch (error) {
     await db.query("ROLLBACK");
-    if (error instanceof Error && error.message.includes("Invalid")) {
-      return res.status(400).json({
-        status: 1,
-        message: "Format tanggal tidak valid. Gunakan format DD-MM-YYYY",
-      });
-    }
+
     throw error;
   }
 };
@@ -300,8 +298,11 @@ const returnBooks = async (req, res) => {
     );
 
     // If all books are returned, update the transaction's return date
-    if (remainingBooks.rows[0].count === 0) {
+    if (Math.floor(remainingBooks.rows[0].count) === 0) {
       const currentDate = format(new Date(), "yyyy-MM-dd");
+      console.log(`UPDATE transaksi 
+         SET tanggal_kembali = ${currentDate} 
+         WHERE id_transaksi = ${id_transaksi}`);
       await db.query(
         `UPDATE transaksi 
          SET tanggal_kembali = $1 
