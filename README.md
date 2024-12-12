@@ -36,7 +36,7 @@ Ensure the following are installed before running the application:
 
    **Server Configuration:**
    ```env
-   PORT=3001
+   PORT=3001 (recommended)
    ```
 
    **Database Configuration:**
