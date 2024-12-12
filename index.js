@@ -24,10 +24,10 @@ connectDatabase();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", masterBukuRoutes);
-app.use("/", masterMahasiswaRoutes);
-app.use("/", transaksiRoutes);
-app.use("/", historyRoutes);
+app.use("/api", masterBukuRoutes);
+app.use("/api", masterMahasiswaRoutes);
+app.use("/api", transaksiRoutes);
+app.use("/api", historyRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

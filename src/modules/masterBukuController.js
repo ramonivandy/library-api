@@ -18,7 +18,7 @@ const getAll = async (req, res) => {
   let sql = `
     SELECT 
       mb.*,
-      sb.jumlah_stok,
+      sb.jumlah_stok AS stok,
       sb.lokasi as rak
     FROM master_buku mb
     LEFT JOIN stok_buku sb ON mb.id_buku = sb.id_buku

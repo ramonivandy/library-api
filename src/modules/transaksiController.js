@@ -12,7 +12,11 @@ const getAll = async (req, res) => {
   const { page = 1, limit = 1000 } = req.query;
 
   // Get total count
-  const countSql = `SELECT COUNT(DISTINCT t.id_transaksi) as total FROM transaksi t`;
+  const countSql = `SELECT COUNT(DISTINCT t.id_transaksi) as total FROM transaksi t
+    JOIN master_mahasiswa m ON t.id_mahasiswa = m.id_mahasiswa
+    JOIN transaksi_detail td ON t.id_transaksi = td.id_transaksi
+    JOIN master_buku b ON td.id_buku = b.id_buku
+    WHERE m.status = TRUE`;
   const countResult = await db.query(countSql);
   const totalData = parseInt(countResult.rows[0].total);
 
@@ -34,6 +38,7 @@ const getAll = async (req, res) => {
     JOIN master_mahasiswa m ON t.id_mahasiswa = m.id_mahasiswa
     JOIN transaksi_detail td ON t.id_transaksi = td.id_transaksi
     JOIN master_buku b ON td.id_buku = b.id_buku
+    WHERE m.status = TRUE
     GROUP BY t.id_transaksi, m.nama_mahasiswa, m.nim
     ORDER BY t.id_transaksi DESC
     LIMIT ${limit} OFFSET ${(page - 1) * limit}
@@ -300,9 +305,6 @@ const returnBooks = async (req, res) => {
     // If all books are returned, update the transaction's return date
     if (Math.floor(remainingBooks.rows[0].count) === 0) {
       const currentDate = format(new Date(), "yyyy-MM-dd");
-      console.log(`UPDATE transaksi 
-         SET tanggal_kembali = ${currentDate} 
-         WHERE id_transaksi = ${id_transaksi}`);
       await db.query(
         `UPDATE transaksi 
          SET tanggal_kembali = $1 
