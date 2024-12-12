@@ -4,8 +4,6 @@ const { addDays, differenceInDays, parse, format } = require("date-fns"); // Mak
 const getAll = async (req, res) => {
   const { page = 1, limit = 1000 } = req.query;
 
-  console.log(`${limit} || ${(page - 1) * limit}`);
-
   // Get total count
   const countSql = `SELECT COUNT(DISTINCT t.id_transaksi) as total FROM transaksi t`;
   const countResult = await db.query(countSql);
@@ -229,7 +227,6 @@ const post = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.log(error);
     await db.query("ROLLBACK");
     if (error instanceof Error && error.message.includes("Invalid")) {
       return res.status(400).json({
