@@ -70,6 +70,48 @@ const getSingle = async (req, res) => {
   });
 };
 
+const getStok = async (req, res) => {
+  const { page = 1, limit = 1000 } = req.query;
+
+  // Get total count of stok records
+  const countSql = `
+    SELECT COUNT(*) as total 
+    FROM stok_buku sb
+    JOIN master_buku mb ON sb.id_buku = mb.id_buku
+    WHERE mb.deleted_at IS NULL
+  `;
+  const countResult = await db.query(countSql);
+  const totalData = parseInt(countResult.rows[0].total);
+
+  // Get paginated stok data with book information
+  let sql = `
+    SELECT 
+      sb.id_stok,
+      sb.id_buku,
+      mb.judul_buku,
+      sb.jumlah_stok,
+      sb.lokasi
+    FROM stok_buku sb
+    JOIN master_buku mb ON sb.id_buku = mb.id_buku
+    WHERE mb.deleted_at IS NULL
+    ORDER BY sb.id_stok DESC
+    LIMIT ${limit} OFFSET ${(page - 1) * limit}
+  `;
+  const data = await db.query(sql);
+
+  return res.json({
+    status: 0,
+    message: "Sukses",
+    data: data.rows,
+    metadata: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalData: totalData,
+      totalPage: Math.ceil(totalData / limit),
+    },
+  });
+};
+
 const post = async (req, res) => {
   const { judul_buku, pengarang, penerbit, tahun_terbit, harga, stok, rak } =
     req.body;
@@ -295,6 +337,7 @@ const del = async (req, res) => {
 module.exports = {
   getAll,
   getSingle,
+  getStok,
   post,
   update,
   del,

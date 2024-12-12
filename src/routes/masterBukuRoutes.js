@@ -8,4 +8,6 @@ router.post("/master/buku", masterBukuController.post);
 router.put("/master/buku/:id", masterBukuController.update);
 router.delete("/master/buku/:id", masterBukuController.del);
 
+router.get("/stok", masterBukuController.getStok);
+
 module.exports = router;
