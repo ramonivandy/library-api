@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const config = require("./src/helper/global_config");
 const port = config.get("/port") || 3001;
@@ -7,6 +8,8 @@ const masterBukuRoutes = require("./src/routes/masterBukuRoutes");
 const masterMahasiswaRoutes = require("./src/routes/masterMahasiswaRoutes");
 const transaksiRoutes = require("./src/routes/transaksiRoutes");
 const historyRoutes = require("./src/routes/historyRoutes");
+
+app.use(cors());
 
 app.get("/", (req, res) => {
   return res.status(200).json({

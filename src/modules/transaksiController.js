@@ -2,7 +2,9 @@ const db = require("../helper/database/index");
 const { addDays, differenceInDays, parse, format } = require("date-fns"); // Make sure to install date-fns
 
 const getAll = async (req, res) => {
-  const { page, limit } = req.query;
+  const { page = 1, limit = 1000 } = req.query;
+
+  console.log(`${limit} || ${(page - 1) * limit}`);
 
   // Get total count
   const countSql = `SELECT COUNT(DISTINCT t.id_transaksi) as total FROM transaksi t`;
@@ -28,7 +30,7 @@ const getAll = async (req, res) => {
     JOIN transaksi_detail td ON t.id_transaksi = td.id_transaksi
     JOIN master_buku b ON td.id_buku = b.id_buku
     GROUP BY t.id_transaksi, m.nama_mahasiswa, m.nim
-    ORDER BY t.tanggal_peminjaman DESC
+    ORDER BY t.id_transaksi DESC
     LIMIT ${limit} OFFSET ${(page - 1) * limit}
   `;
 
@@ -92,17 +94,21 @@ const post = async (req, res) => {
   const { id_mahasiswa, books, tanggal_peminjaman, tanggal_kembali } = req.body;
 
   try {
-    // Parse dates from DD-MM-YYYY format
-    const parsedTanggalPeminjaman = parse(
-      tanggal_peminjaman,
-      "dd-MM-yyyy",
-      new Date()
-    );
-    const parsedTanggalKembali = parse(
-      tanggal_kembali,
-      "dd-MM-yyyy",
-      new Date()
-    );
+    // Check if the date is in YYYY-MM-DD format
+    const parsedTanggalPeminjaman =
+      tanggal_peminjaman.includes("-") &&
+      tanggal_peminjaman.split("-").length === 3
+        ? tanggal_peminjaman
+        : parse(tanggal_peminjaman, "dd-MM-yyyy", new Date())
+            .toISOString()
+            .split("T")[0];
+
+    const parsedTanggalKembali =
+      tanggal_kembali.includes("-") && tanggal_kembali.split("-").length === 3
+        ? tanggal_kembali
+        : parse(tanggal_kembali, "dd-MM-yyyy", new Date())
+            .toISOString()
+            .split("T")[0];
 
     // Validate date difference
     const daysDifference = differenceInDays(
@@ -223,6 +229,7 @@ const post = async (req, res) => {
       data: result,
     });
   } catch (error) {
+    console.log(error);
     await db.query("ROLLBACK");
     if (error instanceof Error && error.message.includes("Invalid")) {
       return res.status(400).json({

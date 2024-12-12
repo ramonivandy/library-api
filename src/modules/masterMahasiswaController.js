@@ -2,7 +2,7 @@ const db = require("../helper/database/index");
 const masterMahasiswaModel = require("../models/masterMahasiswaModel");
 
 const getAll = async (req, res) => {
-  const { page, limit } = req.query;
+  const { page = 1, limit = 1000 } = req.query;
 
   // Get total count of active students
   const countSql = `SELECT COUNT(*) as total FROM master_mahasiswa WHERE status = TRUE`;
@@ -13,6 +13,7 @@ const getAll = async (req, res) => {
   let sql = `
     SELECT * from master_mahasiswa 
     WHERE status = TRUE 
+    ORDER BY master_mahasiswa.id_mahasiswa DESC
     LIMIT ${limit} OFFSET ${(page - 1) * limit}
   `;
   const data = await db.query(sql);

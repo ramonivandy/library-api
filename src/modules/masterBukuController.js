@@ -3,7 +3,7 @@ const masterBukuModel = require("../models/masterBukuModel");
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 const getAll = async (req, res) => {
-  const { page, limit } = req.query;
+  const { page = 1, limit = 1000 } = req.query;
 
   // Get total count of active records
   const countSql = `
@@ -22,7 +22,8 @@ const getAll = async (req, res) => {
       sb.lokasi as rak
     FROM master_buku mb
     LEFT JOIN stok_buku sb ON mb.id_buku = sb.id_buku
-    WHERE mb.deleted_at IS NULL 
+    WHERE mb.deleted_at IS NULL
+    ORDER BY mb.id_buku DESC
     LIMIT ${limit} OFFSET ${(page - 1) * limit}
   `;
   const data = await db.query(sql);
